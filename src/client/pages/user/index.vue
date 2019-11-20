@@ -1,14 +1,12 @@
 <template>
 <div class="dp-user-page" v-if="user">
 	<transition name="zoom" mode="out-in" appear>
-		<div class="profile _shadow" :key="user.id">
+		<div class="profile _panel" :key="user.id">
 			<div class="banner-container" :style="style">
 				<div class="banner" ref="banner" :style="style"></div>
 				<div class="fade"></div>
 				<div class="title">
-					<p class="name">
-						<dp-user-name :user="user" :nowrap="false"/>
-					</p>
+					<dp-user-name class="name" :user="user" :nowrap="true"/>
 					<div>
 						<span class="username"><dp-acct :user="user" :detail="true" /></span>
 						<span v-if="user.isBot" :title="$t('is-bot')"><fa icon="robot"/></span>
@@ -119,6 +117,18 @@ export default Vue.extend({
 		this.fetch();
 	},
 
+	mounted() {
+		window.addEventListener('load', this.onScroll);
+		window.addEventListener('scroll', this.onScroll, { passive: true });
+		window.addEventListener('resize', this.onScroll);
+	},
+
+	beforeDestroy() {
+		window.removeEventListener('load', this.onScroll);
+		window.removeEventListener('scroll', this.onScroll);
+		window.removeEventListener('resize', this.onScroll);
+	},
+
 	methods: {
 		fetch() {
 			Progress.start();
@@ -137,6 +147,20 @@ export default Vue.extend({
 				user: this.user
 			});
 		},
+
+		onScroll() {
+			const banner = this.$refs.banner as any;
+			if (banner == null) return;
+
+			const top = window.scrollY;
+
+			const z = 1.75; // 奥行き(小さいほど奥)
+			const pos = -(top / z);
+			banner.style.backgroundPosition = `center calc(50% - ${pos}px)`;
+
+			const blur = top / 32
+			if (blur <= 10) banner.style.filter = `blur(${blur}px)`;
+		},
 	}
 });
 </script>
@@ -148,7 +172,6 @@ export default Vue.extend({
 	> .profile {
 		position: relative;
 		margin-bottom: 16px;
-		border-radius: var(--radius);
 		overflow: hidden;
 
 		@media (max-width: 500px) {
@@ -228,6 +251,7 @@ export default Vue.extend({
 				left: 0;
 				width: 100%;
 				padding: 0 0 8px 154px;
+				box-sizing: border-box;
 				color: #fff;
 
 				@media (max-width: 500px) {
@@ -260,7 +284,6 @@ export default Vue.extend({
 
 		> .title {
 			display: none;
-			background: var(--bg);
 			text-align: center;
 			padding: 50px 0 16px 0;
 			font-weight: bold;
@@ -294,7 +317,6 @@ export default Vue.extend({
 		> .description {
 			padding: 24px 24px 24px 154px;
 			font-size: 15px;
-			background: var(--bg);
 
 			@media (max-width: 500px) {
 				padding: 16px;
@@ -305,19 +327,12 @@ export default Vue.extend({
 				margin: 0;
 				opacity: 0.5;
 			}
-
-			& + .status {
-				border-top: solid 1px var(--divider);
-			}
 		}
 
 		> .fields {
 			padding: 24px;
-			background: rgba(0, 0, 0, 0.3);
-			color: #fff;
-			-webkit-backdrop-filter: blur(16px);
-			backdrop-filter: blur(16px);
 			font-size: 14px;
+			border-top: solid 1px var(--divider);
 
 			@media (max-width: 500px) {
 				padding: 16px;
@@ -330,13 +345,10 @@ export default Vue.extend({
 				align-items: center;
 
 				&:not(:last-child) {
-					border-bottom: solid 1px var(--divider);
+					margin-bottom: 8px;
 				}
 
 				> .name {
-					border-right: solid 1px var(--faceDivider);
-					padding: 4px;
-					margin: 4px;
 					width: 30%;
 					overflow: hidden;
 					white-space: nowrap;
@@ -346,8 +358,6 @@ export default Vue.extend({
 				}
 
 				> .value {
-					padding: 4px;
-					margin: 4px;
 					width: 70%;
 					overflow: hidden;
 					white-space: nowrap;
@@ -359,7 +369,7 @@ export default Vue.extend({
 		> .status {
 			display: flex;
 			padding: 24px;
-			background: var(--bg);
+			border-top: solid 1px var(--divider);
 
 			@media (max-width: 500px) {
 				padding: 16px;
